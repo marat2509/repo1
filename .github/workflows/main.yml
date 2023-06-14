@@ -56,6 +56,6 @@ jobs:
       - name: Create Pull Request
         uses: repo-sync/pull-request@v2
         with:
-          source_branch: ${{ env.REPO_BRANCH }}
-          destination_branch: ${{ env.REPO_BRANCH }}
+          source_branch: main
+          destination_branch: main
           pr_title: "Cherry-picked commits from ${{ env.FETCH_REPO }}:${{ env.FETCH_BRANCH }}"
