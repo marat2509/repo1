@@ -18,11 +18,13 @@ jobs:
 
       - name: Fetch repository
         run: |
+          echo "Fetching repository ${{ env.FETCH_REPO }} branch ${{ env.FETCH_BRANCH }}"
           git fetch ${{ env.FETCH_REPO }} ${{ env.FETCH_BRANCH }}
 
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
+          echo "Finding last cherry-picked commit"
           LAST_CHERRY_PICKED_COMMIT=""
           for commit in $(git rev-list HEAD); do
             if git branch --contains $commit -r | grep -q FETCH_HEAD; then
@@ -30,17 +32,21 @@ jobs:
               break
             fi
           done
-          echo "::set-output name=commit::$LAST_CHERRY_PICKED_COMMIT"
+          echo "Last cherry-picked commit: $LAST_CHERRY_PICKED_COMMIT"
+          echo "LAST_CHERRY_PICKED_COMMIT=$LAST_CHERRY_PICKED_COMMIT" >> $GITHUB_ENV
 
       - name: Get missing commits
         id: missing_commits
         run: |
-          MISSING_COMMITS=$(git log --pretty=format:"%H" ${{ steps.last_cherry_pick.outputs.commit }}..FETCH_HEAD)
-          echo "::set-output name=commits::$MISSING_COMMITS"
+          echo "Getting missing commits"
+          MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
+          echo "Missing commits: $MISSING_COMMITS"
+          echo "MISSING_COMMITS=$MISSING_COMMITS" >> $GITHUB_ENV
 
       - name: Cherry-pick missing commits
         run: |
-          for commit in ${{ steps.missing_commits.outputs.commits }}; do
+          echo "Cherry-picking missing commits"
+          for commit in $MISSING_COMMITS; do
             if ! git cherry-pick $commit; then
               echo "Conflict with commit $commit"
               git cherry-pick --abort
