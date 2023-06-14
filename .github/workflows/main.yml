@@ -42,8 +42,14 @@ jobs:
       - name: Get missing commits
         id: missing_commits
         run: |
-          echo "Getting missing commits"
-          MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD | tac)
+          python3 -c "exec(\"\"\"
+          import subprocess as sp
+          import os
+          missing_commits=sp.getoutput('git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD')[::-1]
+          os.system("export missing_commits=" + missing_commits)
+          \"\"\")"
+          # echo "Getting missing commits"
+          # MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
           echo "Missing commits: $MISSING_COMMITS"
           
           echo "MISSING_COMMITS<<EOF" >> $GITHUB_ENV
