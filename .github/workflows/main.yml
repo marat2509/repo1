@@ -42,7 +42,7 @@ jobs:
       - name: Get missing commits
         id: missing_commits
         run: |
-          MISSING_COMMITS=$(python3 -c exec("import subprocess as sp; commits = sp.getoutput('git log --pretty=format:\'%H\' $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD').splitlines(); print(''.join(commits[::-1]))
+          MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD | python -c "import sys; commits = sys.stdin.read().splitlines()[::-1]; print('\n'.join(commits))")
           # echo "Getting missing commits"
           # MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
           echo "Missing commits: $MISSING_COMMITS"
