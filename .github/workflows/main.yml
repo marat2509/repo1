@@ -17,7 +17,7 @@ jobs:
           git config --global user.email ${{github.actor}}@users.noreply.github.com
       - name: Fetch from other repository
         run: |
-          git fetch $ {{ env.FETCH_REPO }} ${{ env.FETCH_BRANCH }}
+          git fetch ${{ env.FETCH_REPO }} ${{ env.FETCH_BRANCH }}
       - name: Cherry pick missing commits
         run: |
           # Determine the last commit that was cherry-picked from FETCH_REPO
