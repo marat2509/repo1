@@ -24,19 +24,17 @@ jobs:
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
-          export LAST_CHERRY_PICKED_COMMIT=$(python3 -c "exec(\"\"\"
-          import os
-          import subprocess as sp
-          fetch_commits = sp.getoutput('git log --pretty=format:"%H" FETCH_HEAD').splitlines()
-          #print(f'FETCH_HEAD commits count: {len(fetch_commits)}')
-          head_commits = sp.getoutput('git log --pretty=format:"%H" HEAD').splitlines()
-          #print(f'HEAD commits count: {len(head_commits)}')
-          for commit in head_commits:
-              if commit in fetch_commits:
-                  os.system(f'export LAST_CHERRY_PICKED_COMMIT={commit}')
-                  print(commit)
+          fetch_commits=$(git log --pretty=format:"%H" FETCH_HEAD)
+          # echo "FETCH_HEAD commits count: $(echo "$fetch_commits" | wc -l)"
+          head_commits=$(git log --pretty=format:"%H" HEAD)
+          
+          while read -r commit; do
+              if grep -q "$commit" <<< "$fetch_commits"; then
+                  export LAST_CHERRY_PICKED_COMMIT="$commit"
+                  echo "$commit"
                   break
-          \"\"\")")
+              fi
+          done <<< "$head_commits"
           echo "Last cherry-picked commit: $LAST_CHERRY_PICKED_COMMIT"
           echo "LAST_CHERRY_PICKED_COMMIT=$LAST_CHERRY_PICKED_COMMIT" >> $GITHUB_ENV
 
