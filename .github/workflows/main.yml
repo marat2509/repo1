@@ -55,4 +55,4 @@ jobs:
         with:
           source_branch: main
           destination_branch: main
-          pr_title: "Cherry-picked commits from ${{ env.FETCH_REPO }}:${{ env.FETCH_BRANCH }}
+          pr_title: "Cherry-picked commits from ${{ env.FETCH_REPO }}:${{ env.FETCH_BRANCH }}"
