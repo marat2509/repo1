@@ -29,7 +29,8 @@ jobs:
           commits=$(git rev-list FETCH_HEAD)
           for commit in $(git rev-list HEAD); do
             if [[ $commits == *"$commit"* ]]; then
-              echo $commit
+              LAST_CHERRY_PICKED_COMMIT=$commit
+              break
             fi
             break
           done
