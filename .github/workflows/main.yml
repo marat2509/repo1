@@ -3,6 +3,8 @@ name: Weekly Cherry Pick
 on:
   workflow_dispatch:
 
+env:
+  REPO_BRANCH: ${{ env.REPO_BRANCH }}
 jobs:
   cherry_pick:
     runs-on: ubuntu-latest
