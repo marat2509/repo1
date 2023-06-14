@@ -26,11 +26,12 @@ jobs:
         run: |
           echo "Finding last cherry-picked commit"
           LAST_CHERRY_PICKED_COMMIT=""
+          commits=$(git rev-list FETCH_HEAD)
           for commit in $(git rev-list HEAD); do
-            if git branch --contains $commit -r | grep -q FETCH_HEAD; then
-              LAST_CHERRY_PICKED_COMMIT=$commit
-              break
+            if [[ $commits == *"$commit"* ]]; then
+              echo $commit
             fi
+            break
           done
           echo "Last cherry-picked commit: $LAST_CHERRY_PICKED_COMMIT"
           echo "LAST_CHERRY_PICKED_COMMIT=$LAST_CHERRY_PICKED_COMMIT" >> $GITHUB_ENV
