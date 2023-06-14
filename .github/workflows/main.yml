@@ -43,10 +43,10 @@ jobs:
           echo "Getting missing commits"
           MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
           echo "Missing commits: $MISSING_COMMITS"
-          MISSING_COMMITS="${MISSING_COMMITS//'%'/'%25'}"
-          MISSING_COMMITS="${MISSING_COMMITS//$'\n'/'%0A'}"
-          MISSING_COMMITS="${MISSING_COMMITS//$'\r'/'%0D'}"
-          echo "MISSING_COMMITS=$MISSING_COMMITS" >> $GITHUB_ENV
+          
+          echo "MISSING_COMMITS<<EOF" >> $GITHUB_ENV
+          echo $MISSING_COMMITS >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Cherry-pick missing commits
         run: |
