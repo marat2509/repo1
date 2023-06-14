@@ -9,7 +9,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ref: ${{ env.REPO_BRANCH }}
+          ref: main
 
       - name: Set up Git user info
         run: |
@@ -19,7 +19,7 @@ jobs:
       - name: Fetch repository
         run: |
           echo "Fetching repository ${{ env.FETCH_REPO }} branch ${{ env.FETCH_BRANCH }}"
-          git fetch ${{ env.FETCH_REPO }} ${{ env.FETCH_BRANCH }}
+          git fetch https://github.com/mt6768-dev/android_device_xiaomi_lancelot lineage-20
 
       - name: Find last cherry-picked commit
         id: last_cherry_pick
