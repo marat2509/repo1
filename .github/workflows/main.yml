@@ -1,0 +1,50 @@
+name: Weekly Cherry Pick
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  cherry_pick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.REPO_BRANCH }}
+      - name: Setup Git credentials
+        run: |
+          git config --global user.name ${{github.actor}}
+          git config --global user.email ${{github.actor}}@users.noreply.github.com
+      - name: Fetch from other repository
+        run: |
+          git fetch ${{ env.FETCH_REPO }} ${{ env.FETCH_BRANCH }}
+      - name: Cherry pick missing commits
+        run: |
+          # Determine the last commit that was cherry-picked from FETCH_REPO
+          last_commit=$(git rev-list --all --max-count=1)
+          echo last_commit: $last_commit
+          while [[ -z $last_commit ]]; do
+            last_commit=$(git rev-list --all --max-count=1 --skip=1)
+            echo last_commit skip: $last_commit
+            if git branch -r --contains $last_commit | grep -q FETCH_HEAD; then
+              break
+            fi
+            last_commit=""
+          done
+          # Get the list of missing commits
+          missing_commits=$(git log $last_commit..FETCH_HEAD --pretty=format:"%H")
+          echo Missing: $missing_commits
+          # Cherry pick the missing commits, skipping any that result in conflicts
+          for commit in $missing_commits; do
+            if ! git cherry-pick $commit; then
+              echo "Skipping commit $commit due to conflicts"
+              git cherry-pick --abort
+            fi
+          done
+          # Count the number of cherry-picked commits
+          num_commits=$(echo $missing_commits | wc -w)
+          echo "NUM_COMMITS=$num_commits" >> $GITHUB_ENV
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "Cherry Pick (${{ env.NUM_COMMITS }} commits)"
