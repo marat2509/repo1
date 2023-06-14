@@ -57,7 +57,7 @@ jobs:
           for commit in $MISSING_COMMITS; do
             if ! git cherry-pick $commit; then
               echo "Conflict with commit $commit"
-              git cherry-pick --abort
+              git cherry-pick --skip
             fi
           done
 
