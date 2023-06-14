@@ -10,6 +10,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: main
+          fetch-depth: 0
 
       - name: Set up Git user info
         run: |
