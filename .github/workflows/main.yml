@@ -42,24 +42,37 @@ jobs:
       - name: Get missing commits
         id: missing_commits
         run: |
-          MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD | tac)
-          # echo "Getting missing commits"
-          # MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
+          MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD | sed -n '1!G;h;$p')
           echo "Missing commits: $MISSING_COMMITS"
-          
+              
           echo "MISSING_COMMITS<<EOF" >> $GITHUB_ENV
-          echo $MISSING_COMMITS >> $GITHUB_ENV
+          echo "$MISSING_COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Cherry-pick missing commits
         run: |
+          successful_cherry_picks=0
+          conflict_commits=()
+          
           echo "Cherry-picking missing commits"
+          
           for commit in $MISSING_COMMITS; do
             if ! git cherry-pick $commit; then
-              echo "Conflict with commit $commit"
+              conflict_commits+=($commit)
               git cherry-pick --skip
+            else 
+              successful_cherry_picks=$((successful_cherry_picks+1))
             fi
           done
+
+          echo "Successful cherry picks count: $successful_cherry_picks"
+          
+          if [ ${#conflict_commits[@]} -gt 0 ]; then 
+            echo "Commits with conflicts:"
+            for conflict_commit in ${conflict_commits[@]}; do 
+              echo "- $conflict_commit"
+            done 
+          fi 
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
