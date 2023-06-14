@@ -45,6 +45,7 @@ jobs:
           echo "Getting missing commits"
           MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
           echo "Missing commits: $MISSING_COMMITS"
+          MISSING_COMMITS=$(echo $MISSING_COMMITS | tac)
           
           echo "MISSING_COMMITS<<EOF" >> $GITHUB_ENV
           echo $MISSING_COMMITS >> $GITHUB_ENV
