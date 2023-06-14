@@ -24,8 +24,19 @@ jobs:
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
-          wget -O get_commits.py https://gist.githubusercontent.com/marat2509/c4b824eac3b8efbb4cad6d0b67dcf305/raw/get_cherrypicked.py
-          LAST_CHERRY_PICKED_COMMIT=$(python3 get_commits.py)
+          export LAST_CHERRY_PICKED_COMMIT=$(python3 -c "exec(\"\"\"
+          import os
+          import subprocess as sp
+          fetch_commits = sp.getoutput('git log --pretty=format:"%H" FETCH_HEAD').splitlines()
+          #print(f'FETCH_HEAD commits count: {len(fetch_commits)}')
+          head_commits = sp.getoutput('git log --pretty=format:"%H" HEAD').splitlines()
+          #print(f'HEAD commits count: {len(head_commits)}')
+          for commit in head_commits:
+              if commit in fetch_commits:
+                  os.system(f'export LAST_CHERRY_PICKED_COMMIT={commit}')
+                  print(commit)
+                  break
+          \"\"\")")
           echo "Last cherry-picked commit: $LAST_CHERRY_PICKED_COMMIT"
           echo "LAST_CHERRY_PICKED_COMMIT=$LAST_CHERRY_PICKED_COMMIT" >> $GITHUB_ENV
 
