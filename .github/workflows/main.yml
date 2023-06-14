@@ -36,8 +36,13 @@ jobs:
           # Get the list of missing commits
           missing_commits=$(git log $last_commit..FETCH_HEAD --pretty=format:"%H")
           echo Missing: $missing_commits
-          # Cherry pick the missing commits
-          git cherry-pick $missing_commits
+          # Cherry pick the missing commits, skipping any that result in conflicts
+          for commit in $missing_commits; do
+            if ! git cherry-pick $commit; then
+              echo "Skipping commit $commit due to conflicts"
+              git cherry-pick --abort
+            fi
+          done
           # Count the number of cherry-picked commits
           num_commits=$(echo $missing_commits | wc -w)
           echo "NUM_COMMITS=$num_commits" >> $GITHUB_ENV
