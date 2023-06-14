@@ -12,10 +12,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ref: ${{ env.REPO_BRANCH }}
+          ref: main
       - name: Fetch from other repository
         run: |
-          git fetch ${{ env.FETCH_REPO }} ${{ env.FETCH_BRANCH }}
+          git fetch https://github.com/marat2509/repo2 main
       - name: Cherry pick missing commits
         run: |
           # Determine the last commit that was cherry-picked from FETCH_REPO
