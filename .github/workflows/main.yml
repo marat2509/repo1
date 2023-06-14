@@ -46,7 +46,7 @@ jobs:
           import subprocess as sp
           import os
           missing_commits=sp.getoutput('git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD').splitlines()[::-1]
-          os.system('export missing_commits=' + '\n'.join(missing_commits))
+          os.system('export MISSING_COMMITS=' + '\n'.join(missing_commits))
           \"\"\")"
           # echo "Getting missing commits"
           # MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD)
