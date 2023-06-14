@@ -1,8 +1,6 @@
 name: Weekly Cherry Pick
 
 on:
-  schedule:
-    - cron: '0 0 * * 0' # every Sunday at midnight
   workflow_dispatch:
 
 jobs:
@@ -12,14 +10,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ref: main
+          ref: $REPO_BRANCH
       - name: Setup Git credentials
         run: |
-          git config --global user.name marat2509
-          git config --global user.email marat2509@users.noreply.github.com
+          git config --global user.name ${{github.actor}}
+          git config --global user.email ${{github.actor}}@users.noreply.github.com
       - name: Fetch from other repository
         run: |
-          git fetch https://github.com/marat2509/repo2 main
+          git fetch $FETCH_REPO $FETCH_BRANCH
       - name: Cherry pick missing commits
         run: |
           # Determine the last commit that was cherry-picked from FETCH_REPO
@@ -49,4 +47,4 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          title: "Cherry Pick $(date +'%Y-%m-%d') (${{ env.NUM_COMMITS }} commits)"
+          title: "Cherry Pick (${{ env.NUM_COMMITS }} commits)"
