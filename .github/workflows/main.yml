@@ -20,7 +20,7 @@ jobs:
       - name: Fetch repository
         run: |
           echo "Fetching repository ${{ env.FETCH_REPO }} branch ${{ env.FETCH_BRANCH }}"
-          git fetch https://github.com/mt6768-dev/android_device_xiaomi_lancelot lineage-20
+          git fetch $FETCH_REPO $FETCH_BRANCH
 
       - name: Find last cherry-picked commit
         id: last_cherry_pick
@@ -86,32 +86,19 @@ jobs:
           echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
-          if [ "$conflict_commits" != "\n" ]; then
-            echo "show_conflict_commits=true" >> $GITHUB_ENV
-          else
-            echo "show_conflict_commits=false" >> $GITHUB_ENV
-          fi
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           delete-branch: true
+          title: Cherry-pick new changes (${{ env.successful_cherry_picks}} commits)
           body: |
             This pull request contains ${{ env.successful_cherry_picks}} successful cherry-picked commits.
             
             <details>
-              <summary>Cherry-picked commits</summary>
+              <summary>Cherry-picked commits:</summary>
             
             ```
             ${{ env.cherry_picks }}
             ```
-            </details>
             
-            ${{#if eq(env.show_conflict_commits, 'true')}}
-            <details>
-              <summary>Commits with conflicts</summary>
-            ```
-            ${{ env.conflict_commits }}
-            ```
             </details>
-            ${{/if}}
