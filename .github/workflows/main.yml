@@ -71,10 +71,10 @@ jobs:
           
           for COMMIT in $MISSING_COMMITS; do
             if ! git cherry-pick $COMMIT; then
-              CONFLICT_COMMITS+=($COMMIT)
+              CONFLICT_COMMITS+=('<li><a href="'$FETCH_REPO'/commit/'$COMMIT'">'$COMMIT'</a></li>')
               git cherry-pick --skip
             else 
-              CHERRY_PICKS+=('<li><a href="'$FETCH_REPO'/commit/'$COMMIT'">'$COMMIT'</a></li>')
+              CHERRY_PICKS+=($COMMIT)
               SUCCESSFUL_CHERRY_PICKS=$((SUCCESSFUL_CHERRY_PICKS+1))
             fi
           done
@@ -98,19 +98,38 @@ jobs:
           echo "$(echo ${CONFLICT_COMMITS[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          delete-branch: true
-          title: Cherry-pick new changes (${{env.SUCCESSFUL_CHERRY_PICKS}} commits)
-          body: |
-            This pull request contains ${{env.SUCCESSFUL_CHERRY_PICKS}} successful cherry-picked commits.
-            
-            <details>
-              <summary>Cherry-picked commits:</summary>
-            
-            <ul>
-            ${{ env.CHERRY_PICKS }}
-            </ul>
-            
-            </details>
+      - name: Push changes
+        run: |
+          git push origin $REPO_BRANCH -f
+      
+      - name: Generate Job summaries
+        run: |
+          if [ ${#CHERRY_PICKS[@]} -gt 0 ]; then 
+            echo "<details><summary>Cherry-picked commits</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<ul>" >> $GITHUB_STEP_SUMMARY
+            for COMMIT in ${CHERRY_PICKS[@]}; do 
+              echo "<li><a href="'$FETCH_REPO'/commit/'$COMMIT'">'$COMMIT'</a></li>'" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "</ul>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+            echo "<br/>" >> $GITHUB_STEP_SUMMARY
+
+            # Check if there are any commits in the CONFLICT_COMMITS array
+            if [ ${#CONFLICT_COMMITS[@]} -gt 0 ]; then 
+              echo "<details><summary>Commits with conflicts</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "<ul>" >> $GITHUB_STEP_SUMMARY
+              for COMMIT in ${CONFLICT_COMMITS[@]}; do 
+                echo "<li><a href="'$FETCH_REPO'/commit/'$COMMIT'">'$COMMIT'</a></li>'" >> $GITHUB_STEP_SUMMARY
+              done
+              echo "</ul>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "<br/>" >> $GITHUB_STEP_SUMMARY
+            fi
+
+          else
+            echo "Everything is up to date." >> $GITHUB_STEP_SUMMARY
+          fi
