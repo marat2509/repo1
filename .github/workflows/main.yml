@@ -77,8 +77,14 @@ jobs:
           fi
 
           echo "successful_cherry_picks=$successful_cherry_picks" >> $GITHUB_ENV
-          echo "cherry_picks=$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
-          echo "conflict_commits=$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          
+          echo "cherry_picks<<EOF" >> $GITHUB_ENV
+          echo "$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "EOF"
+          
+          echo "conflict_commits<<EOF" >> $GITHUB_ENV
+          echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
           
           echo $cherry_picks
           echo $conflict_commits
