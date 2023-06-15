@@ -61,7 +61,7 @@ jobs:
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
-          fetch_commits=$(python /home/runner/work/_temp/scr.py print(\"\n\".join(get.head_commits())))
+          fetch_commits=$(python /home/runner/work/_temp/scr.py print(\"\n\".join(get.head_commits(\)\)\))
           # echo "FETCH_HEAD commits count: $(echo "$fetch_commits" | wc -l)"
           head_commits=$(git log --pretty=format:"%H" HEAD)
           
