@@ -67,7 +67,7 @@ jobs:
               conflict_commits+=($commit)
               git cherry-pick --skip
             else 
-              cherry_picks+=('<ul><a href="'$fetch_repo''/commit/''$commit'">'$commit'</a></ul>')
+              cherry_picks+=('<li><a href="'$FETCH_REPO'/commit/'$commit'">'$commit'</a></li>')
               successful_cherry_picks=$((successful_cherry_picks+1))
             fi
           done
