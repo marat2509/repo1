@@ -80,16 +80,11 @@ jobs:
           
           echo "cherry_picks<<EOF" >> $GITHUB_ENV
           echo "$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
-          echo -e "\n" >> $GITHUB_ENV
-          echo "EOF"
+          echo "EOF" >> $GITHUB_DEV
           
           echo "conflict_commits<<EOF" >> $GITHUB_ENV
           echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
-          echo -e "\n" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          
-          echo $cherry_picks
-          echo $conflict_commits
           
 
       - name: Create Pull Request
@@ -99,11 +94,19 @@ jobs:
           body: |
             This pull request contains ${{ env.successful_cherry_picks}} successful cherry-picked commits.
             
+            <details>
+              <summary>Cherry-picked commits</summary>
+            
             ```
             ${{ env.cherry_picks }}
             ```
+            </details>
             
-            Commits with conflicts:
+            ${{#if env.conflict_commits}}
+            <details>
+              <summary>Commits with conflicts</summary>
             ```
             ${{ env.conflict_commits }}
             ```
+            </details>
+            ${{/if}}
