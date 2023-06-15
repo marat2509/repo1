@@ -80,12 +80,17 @@ jobs:
           
           echo "cherry_picks<<EOF" >> $GITHUB_ENV
           echo "$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_DEV
+          echo "EOF" >> $GITHUB_ENV
           
           echo "conflict_commits<<EOF" >> $GITHUB_ENV
           echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
+          if [ "$conflict_commits" != "\n" ]; then
+            echo "show_conflict_commits=true" >> $GITHUB_ENV
+          else
+            echo "show_conflict_commits=false" >> $GITHUB_ENV
+          fi
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -102,7 +107,7 @@ jobs:
             ```
             </details>
             
-            ${{#if env.conflict_commits}}
+            ${{#if eq(env.show_conflict_commits, 'true')}}
             <details>
               <summary>Commits with conflicts</summary>
             ```
