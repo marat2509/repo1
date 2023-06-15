@@ -80,11 +80,13 @@ jobs:
           
           echo "cherry_picks<<EOF" >> $GITHUB_ENV
           echo "$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
-          echo -e "EOF\n"
+          echo -e "\n" >> $GITHUB_ENV
+          echo "EOF"
           
           echo "conflict_commits<<EOF" >> $GITHUB_ENV
           echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
-          echo -e "EOF\n" >> $GITHUB_ENV
+          echo -e "\n" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
           
           echo $cherry_picks
           echo $conflict_commits
