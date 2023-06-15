@@ -1,8 +1,6 @@
 name: Cherry-pick commits
 on:
   workflow_dispatch:
-  schedule:
-    - cron: 0 20 * * 5
 
 env:
   REPO_BRANCH: ${{vars.REPO_BRANCH}}
