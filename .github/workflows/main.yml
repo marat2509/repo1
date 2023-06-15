@@ -1,11 +1,12 @@
 name: Cherry-pick commits
 on:
   workflow_dispatch:
-
+  
 env:
   REPO_BRANCH: ${{vars.REPO_BRANCH}}
   FETCH_REPO: ${{vars.FETCH_REPO}}
   FETCH_BRANCH: ${{vars.FETCH_BRANCH}}
+
 jobs:
   cherry_pick:
     runs-on: ubuntu-latest
@@ -25,43 +26,11 @@ jobs:
         run: |
           echo "Fetching repository $FETCH_REPO with branch $FETCH_BRANCH"
           git fetch $FETCH_REPO $FETCH_BRANCH
-      
-      - name: Add script
-        run: |
-          cat > /home/runner/work/_temp/scr.py<< EOF
-          import subprocess as subp
-          import os
-          import platform
-          import sys
-
-          def set_variable(key, value) -> None:
-              if platform.system() == "Windows":
-                  os.system(f"set {key}={value}")
-              elif platform.system() == "Linux":
-                  os.system(f"export {key}={value}")
-
-          class get:
-              def head_commits():
-                  head_commits = subp.run(["git", "log", "--pretty=format:%H", "HEAD"], capture_output=True, text=True, shell=True).stdout.splitlines()
-                  return head_commits
-
-              def fetch_commits():
-                  fetch_commits = subp.run(["git", "log", "--pretty=format:%H", "FETCH_HEAD"], capture_output=True, text=True, shell=True).stdout.splitlines()
-                  return fetch_commits
-
-              def last_cherry_picked_commit():
-                  for commit in get.head_commits():
-                      if commit in get.fetch_commits():
-                          return commit
-                          break
-
-          exec(sys.argv[1])
-          EOF
 
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
-          fetch_commits=$(python /home/runner/work/_temp/scr.py print(\"\n\".join(get.head_commits(\)\)\))
+          fetch_commits=$(git log --pretty=format:"%H" FETCH_HEAD)
           # echo "FETCH_HEAD commits count: $(echo "$fetch_commits" | wc -l)"
           head_commits=$(git log --pretty=format:"%H" HEAD)
           
@@ -98,7 +67,7 @@ jobs:
               conflict_commits+=($commit)
               git cherry-pick --skip
             else 
-              cherry_picks+=($commit)
+              cherry_picks+=('<ul><a href="'$fetch_repo''/commit/''$commit'">'$commit'</a></ul>')
               successful_cherry_picks=$((successful_cherry_picks+1))
             fi
           done
@@ -133,8 +102,8 @@ jobs:
             <details>
               <summary>Cherry-picked commits:</summary>
             
-            ```
+            <ul>
             ${{ env.cherry_picks }}
-            ```
+            </ul>
             
             </details>
