@@ -1,7 +1,9 @@
 name: Cherry-pick commits
 on:
   workflow_dispatch:
-  
+  schedule:
+    - cron: 0 20 * * 5
+
 env:
   REPO_BRANCH: ${{vars.REPO_BRANCH}}
   FETCH_REPO: ${{vars.FETCH_REPO}}
@@ -30,17 +32,15 @@ jobs:
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
-          fetch_commits=$(git log --pretty=format:"%H" FETCH_HEAD)
-          # echo "FETCH_HEAD commits count: $(echo "$fetch_commits" | wc -l)"
-          head_commits=$(git log --pretty=format:"%H" HEAD)
+          FETCH_COMMITS=$(git log --pretty=format:"%H" FETCH_HEAD)
+          HEAD_COMMITS=$(git log --pretty=format:"%H" HEAD)
           
-          while read -r commit; do
-              if grep -q "$commit" <<< "$fetch_commits"; then
-                  export LAST_CHERRY_PICKED_COMMIT="$commit"
-                  echo "$commit"
+          while read -r COMMIT; do
+              if grep -q "$COMMIT" <<< "$FETCH_COMMITS"; then
+                  export LAST_CHERRY_PICKED_COMMIT="$COMMIT"
                   break
               fi
-          done <<< "$head_commits"
+          done <<< "$HEAD_COMMITS"
           echo "Last cherry-picked commit: $LAST_CHERRY_PICKED_COMMIT"
           echo "LAST_CHERRY_PICKED_COMMIT=$LAST_CHERRY_PICKED_COMMIT" >> $GITHUB_ENV
 
@@ -48,7 +48,7 @@ jobs:
         id: missing_commits
         run: |
           MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD | sed -n '1!G;h;$p')
-          echo "Missing commits: $MISSING_COMMITS"
+          echo -e "Missing commits:\n$MISSING_COMMITS"
               
           echo "MISSING_COMMITS<<EOF" >> $GITHUB_ENV
           echo "$MISSING_COMMITS" >> $GITHUB_ENV
@@ -56,38 +56,38 @@ jobs:
 
       - name: Cherry-pick missing commits
         run: |
-          successful_cherry_picks=0
-          cherry_picks=()
-          conflict_commits=()
+          SUCCESSFUL_CHERRY_PICKS=0
+          CHERRY_PICKS=()
+          CONFLICT_COMMITS=()
           
           echo "Cherry-picking missing commits"
           
-          for commit in $MISSING_COMMITS; do
-            if ! git cherry-pick $commit; then
-              conflict_commits+=($commit)
+          for COMMIT in $MISSING_COMMITS; do
+            if ! git cherry-pick $COMMIT; then
+              CONFLICT_COMMITS+=($COMMIT)
               git cherry-pick --skip
             else 
-              cherry_picks+=('<li><a href="'$FETCH_REPO'/commit/'$commit'">'$commit'</a></li>')
-              successful_cherry_picks=$((successful_cherry_picks+1))
+              CHERRY_PICKS+=('<li><a href="'$FETCH_REPO'/commit/'$COMMIT'">'$COMMIT'</a></li>')
+              SUCCESSFUL_CHERRY_PICKS=$((SUCCESSFUL_CHERRY_PICKS+1))
             fi
           done
 
-          echo "Successful cherry picks count: $successful_cherry_picks"
+          echo "Successful cherry picks count: $SUCCESSFUL_CHERRY_PICKS"
           
-          if [ ${#conflict_commits[@]} -gt 0 ]; then 
+          if [ ${#CONFLICT_COMMITS[@]} -gt 0 ]; then 
             echo "Commits with conflicts:"
-            for conflict_commit in ${conflict_commits[@]}; do 
-              echo "- $conflict_commit"
+            for COMMIT in ${CONFLICT_COMMITS[@]}; do 
+              echo "- $commit"
             done 
           fi
 
-          echo "successful_cherry_picks=$successful_cherry_picks" >> $GITHUB_ENV
+          echo "SUCCESSFUL_CHERRY_PICKS=$SUCCESSFUL_CHERRY_PICKS" >> $GITHUB_ENV
           
-          echo "cherry_picks<<EOF" >> $GITHUB_ENV
+          echo "CHERRY_PICKS<<EOF" >> $GITHUB_ENV
           echo "$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
-          echo "conflict_commits<<EOF" >> $GITHUB_ENV
+          echo "CONFLICT_COMMITS<<EOF" >> $GITHUB_ENV
           echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
@@ -95,15 +95,15 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           delete-branch: true
-          title: Cherry-pick new changes (${{ env.successful_cherry_picks}} commits)
+          title: Cherry-pick new changes (${{env.SUCCESSFUL_CHERRY_PICKS}} commits)
           body: |
-            This pull request contains ${{ env.successful_cherry_picks}} successful cherry-picked commits.
+            This pull request contains ${{env.SUCCESSFUL_CHERRY_PICKS}} successful cherry-picked commits.
             
             <details>
               <summary>Cherry-picked commits:</summary>
             
             <ul>
-            ${{ env.cherry_picks }}
+            ${{ env.CHERRY_PICKS }}
             </ul>
             
             </details>
