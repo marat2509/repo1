@@ -28,7 +28,8 @@ jobs:
       
       - name: Add script
         run: |
-          echo """import subprocess as subp
+          cat > /home/runner/work/_temp/scr.py<< EOF
+          import subprocess as subp
           import os
           import platform
           import sys
@@ -54,12 +55,13 @@ jobs:
                           return commit
                           break
 
-          exec(sys.argv[1])""" > /home/runner/work/_temp/scr.py
+          exec(sys.argv[1])
+          EOF
 
       - name: Find last cherry-picked commit
         id: last_cherry_pick
         run: |
-          fetch_commits=$(python /home/runner/work/_temp/scr.py print(\"\\").join(get.fetch_commits()))
+          fetch_commits=$(python /home/runner/work/_temp/scr.py print(\"\n\".join(get.head_commits())))
           # echo "FETCH_HEAD commits count: $(echo "$fetch_commits" | wc -l)"
           head_commits=$(git log --pretty=format:"%H" HEAD)
           
