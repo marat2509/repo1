@@ -52,6 +52,7 @@ jobs:
       - name: Cherry-pick missing commits
         run: |
           successful_cherry_picks=0
+          cherry_picks=()
           conflict_commits=()
           
           echo "Cherry-picking missing commits"
@@ -61,6 +62,7 @@ jobs:
               conflict_commits+=($commit)
               git cherry-pick --skip
             else 
+              cherry_picks+=($commit)
               successful_cherry_picks=$((successful_cherry_picks+1))
             fi
           done
@@ -72,9 +74,25 @@ jobs:
             for conflict_commit in ${conflict_commits[@]}; do 
               echo "- $conflict_commit"
             done 
-          fi 
+          fi
+
+          echo "successful_cherry_picks=$successful_cherry_picks" >> $GITHUB_ENV
+          echo "cherry_picks=$(echo $(cherry_picks[@]) | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "conflict_commits=$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           delete-branch: true
+          body: |
+            This pull request contains ${{ env.successful_cherry_picks}} successful cherry-picked commits.
+            
+            ```
+            ${{ env.cherry_picks }}
+            ...
+            ```
+            
+            Commits with conflicts:
+            ```
+            ${{ env.conflict_commits }}
+            ```
