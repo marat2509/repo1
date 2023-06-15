@@ -1,0 +1,116 @@
+name: Cherry-pick commits
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 20 * * 5
+
+env:
+  REPO_BRANCH: ${{vars.REPO_BRANCH}}
+  FETCH_REPO: ${{vars.FETCH_REPO}}
+  FETCH_BRANCH: ${{vars.FETCH_BRANCH}}
+
+jobs:
+  cherry_pick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{vars.REPO_BRANCH}}
+          fetch-depth: 0
+
+      - name: Set up Git user info
+        run: |
+          git config --global user.name ${{github.actor}}
+          git config --global user.email ${{github.actor}}@users.noreply.github.com
+
+      - name: Fetch repository
+        run: |
+          echo "Fetching repository ${{vars.FETCH_REPO}} with branch ${{vars.FETCH_BRANCH}}"
+          git fetch $FETCH_REPO $FETCH_BRANCH
+
+      - name: Find last cherry-picked commit
+        id: last_cherry_pick
+        run: |
+          FETCH_COMMITS=$(git log --pretty=format:"%H" FETCH_HEAD)
+          HEAD_COMMITS=$(git log --pretty=format:"%H" HEAD)
+          
+          while read -r COMMIT; do
+              if grep -q "$COMMIT" <<< "$FETCH_COMMITS"; then
+                  export LAST_CHERRY_PICKED_COMMIT="$COMMIT"
+                  break
+              fi
+          done <<< "$HEAD_COMMITS"
+          
+          # Check if the last cherry-picked commit is equal to the last commit in FETCH_HEAD
+          if [ "$LAST_CHERRY_PICKED_COMMIT" == "$(git log -1 --pretty=format:"%H" FETCH_HEAD)" ]; then
+            echo "Everything is up to date. Stopping further execution."
+            exit 0
+          fi
+
+          echo "Last cherry-picked commit: $LAST_CHERRY_PICKED_COMMIT"
+          echo "LAST_CHERRY_PICKED_COMMIT=$LAST_CHERRY_PICKED_COMMIT" >> $GITHUB_ENV
+
+      - name: Get missing commits
+        id: missing_commits
+        run: |
+          MISSING_COMMITS=$(git log --pretty=format:"%H" $LAST_CHERRY_PICKED_COMMIT..FETCH_HEAD | sed -n '1!G;h;$p')
+          echo -e "Missing commits:\n$MISSING_COMMITS"
+              
+          echo "MISSING_COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$MISSING_COMMITS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Cherry-pick missing commits
+        run: |
+          SUCCESSFUL_CHERRY_PICKS=0
+          CHERRY_PICKS=()
+          CONFLICT_COMMITS=()
+          
+          echo "Cherry-picking missing commits"
+          
+          for COMMIT in $MISSING_COMMITS; do
+            if ! git cherry-pick $COMMIT; then
+              CONFLICT_COMMITS+=($COMMIT)
+              git cherry-pick --skip
+            else 
+              CHERRY_PICKS+=('<li><a href="'$FETCH_REPO'/commit/'$COMMIT'">'$COMMIT'</a></li>')
+              SUCCESSFUL_CHERRY_PICKS=$((SUCCESSFUL_CHERRY_PICKS+1))
+            fi
+          done
+
+          echo "Successful cherry picks count: $SUCCESSFUL_CHERRY_PICKS"
+          
+          if [ ${#CONFLICT_COMMITS[@]} -gt 0 ]; then 
+            echo "Commits with conflicts:"
+            for COMMIT in ${CONFLICT_COMMITS[@]}; do 
+              echo "- $COMMIT"
+            done 
+          fi
+
+          echo "SUCCESSFUL_CHERRY_PICKS=$SUCCESSFUL_CHERRY_PICKS" >> $GITHUB_ENV
+          
+          echo "CHERRY_PICKS<<EOF" >> $GITHUB_ENV
+          echo "$(echo ${CHERRY_PICKS[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "CONFLICT_COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$(echo ${CONFLICT_COMMITS[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          delete-branch: true
+          title: Cherry-pick new changes (${{env.SUCCESSFUL_CHERRY_PICKS}} commits)
+          body: |
+            This pull request contains ${{env.SUCCESSFUL_CHERRY_PICKS}} successful cherry-picked commits.
+            
+            <details>
+              <summary>Cherry-picked commits:</summary>
+            
+            <ul>
+            ${{ env.CHERRY_PICKS }}
+            </ul>
+            
+            </details>
