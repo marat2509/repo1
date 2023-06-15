@@ -84,11 +84,11 @@ jobs:
           echo "SUCCESSFUL_CHERRY_PICKS=$SUCCESSFUL_CHERRY_PICKS" >> $GITHUB_ENV
           
           echo "CHERRY_PICKS<<EOF" >> $GITHUB_ENV
-          echo "$(echo ${cherry_picks[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "$(echo ${CHERRY_PICKS[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
           echo "CONFLICT_COMMITS<<EOF" >> $GITHUB_ENV
-          echo "$(echo ${conflict_commits[@]} | tr ' ' '\n')" >> $GITHUB_ENV
+          echo "$(echo ${CONFLICT_COMMITS[@]} | tr ' ' '\n')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
       - name: Create Pull Request
