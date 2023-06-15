@@ -19,11 +19,9 @@ jobs:
           python3 -c "import os; print(*os.environ)"
 
       - name: Fetch repository
-        env:
-          FETCH_BRANCH: ${{ env.FETCH_BRANCH }}
         run: |
-          echo "Fetching repository ${{ env.FETCH_REPO }} branch ${{ env.FETCH_BRANCH }}"
-          git fetch ${{env.FETCH_REPO}} $FETCH_BRANCH
+          echo "Fetching repository ${{ vars.FETCH_REPO }} branch ${{ vars.FETCH_BRANCH }}"
+          git fetch ${{vars.FETCH_REPO}} ${{vars. FETCH_BRANCH}}
 
       - name: Find last cherry-picked commit
         id: last_cherry_pick
