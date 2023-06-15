@@ -20,7 +20,7 @@ jobs:
 
       - name: Fetch repository
         env:
-          - FETCH_BRANCH: ${{ env.FETCH_BRANCH }}
+          FETCH_BRANCH: ${{ env.FETCH_BRANCH }}
         run: |
           echo "Fetching repository ${{ env.FETCH_REPO }} branch ${{ env.FETCH_BRANCH }}"
           git fetch ${{env.FETCH_REPO}} $FETCH_BRANCH
